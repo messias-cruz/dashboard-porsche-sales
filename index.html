@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porsche Sales Intelligence | Executive BI Dashboard</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        porsche: {
+                            black: '#0B0D0E',
+                            dark: '#14171A',
+                            card: '#1C2024',
+                            border: '#2A2F35',
+                            borderLight: '#383E45',
+                            gold: '#D4AF37',
+                            goldHover: '#FFCC00',
+                            red: '#D5001C',
+                            redHover: '#B00017',
+                            silver: '#A1A8B3',
+                            grayLight: '#E2E8F0'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Personalização do Scrollbar e Efeitos Metálicos */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0B0D0E; }
+        ::-webkit-scrollbar-thumb { background: #2A2F35; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D4AF37; }
+        
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FFFFFF 30%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .card-porsche {
+            background-color: #1C2024;
+            border: 1px solid #2A2F35;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-porsche:hover {
+            border-color: rgba(212, 175, 55, 0.35);
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+        }
+
+        .porsche-badge-red {
+            background-color: rgba(213, 0, 28, 0.15);
+            color: #D5001C;
+            border: 1px solid rgba(213, 0, 28, 0.4);
+        }
+
+        select option {
+            background-color: #1C2024;
+            color: #E2E8F0;
+        }
+    </style>
+</head>
+<body class="bg-porsche-black text-gray-200 font-sans antialiased min-h-screen pb-12">
+
+    <!-- HEADER EXECUTIVO -->
+    <header class="bg-porsche-dark border-b border-porsche-border sticky top-0 z-50 shadow-2xl backdrop-blur-md bg-opacity-95">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded bg-porsche-black border border-porsche-gold/40 flex items-center justify-center font-black tracking-tighter text-porsche-gold text-xl shadow-inner">
+                    P
+                </div>
+                <div>
+                    <div class="flex items-center space-x-3">
+                        <h1 class="text-2xl font-extrabold tracking-tight gold-gradient-text">Porsche Sales Intelligence</h1>
+                        <span class="porsche-badge-red text-[10px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">Executive BI</span>
+                    </div>
+                    <p class="text-xs text-porsche-silver mt-0.5">Painel Corporativo de Performance Comercial & Operacional</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <!-- Badge de Integridade -->
+                <div class="flex items-center space-x-2 bg-porsche-card px-3.5 py-1.5 rounded-full border border-porsche-border text-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-gray-300 font-medium">Base Oficial:</span>
+                    <span class="text-porsche-gold font-bold" id="totalRecordsBadge">100 Vendas Sanitizadas</span>
+                </div>
+
+                <button onclick="resetFilters()" class="bg-porsche-border hover:bg-porsche-gold hover:text-porsche-black text-xs font-semibold px-4 py-2 rounded transition-all duration-200 flex items-center space-x-1.5 border border-porsche-borderLight">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Resetar Filtros</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
+        <!-- BARRA SUPERIOR DE FILTROS INTERATIVOS -->
+        <section class="card-porsche rounded-xl p-4 shadow-lg">
+            <div class="flex items-center justify-between mb-3 border-b border-porsche-border pb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-porsche-gold flex items-center gap-2">
+                    <svg class="w-4 h-4 text-porsche-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                    Filtros Multidimensionais Interativos
+                </span>
+                <span class="text-[11px] text-porsche-silver" id="filterSummaryText">Exibindo todos os registros</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                <!-- Dropdown Modelo / Família -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-porsche-silver mb-1">Agrupamento / Modelo</label>
+                    <select id="filterModel" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border text-xs rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:border-porsche-gold">
+                        <option value="ALL">Todos os Modelos / Famílias</option>
+                        <optgroup label="--- FAMÍLIAS DE VEÍCULOS ---">
+                            <option value="FAM_911">Linha 911</option>
+                            <option value="FAM_Taycan">Linha Taycan</option>
+                            <option value="FAM_Panamera">Linha Panamera</option>
+                            <option value="FAM_Cayenne">Linha Cayenne</option>
+                            <option value="FAM_Macan">Linha Macan</option>
+                            <option value="FAM_718">Linha 718 (Cayman/Boxster)</option>
+                        </optgroup>
+                        <optgroup label="--- MODELOS ESPECÍFICOS ---" id="optgroupModels">
+                            <!-- Inserido dinamicamente via JS -->
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Dropdown Estado -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-porsche-silver mb-1">Estado (UF)</label>
+                    <select id="filterState" onchange="onStateChange()" class="w-full bg-porsche-dark border border-porsche-border text-xs rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:border-porsche-gold">
+                        <option value="ALL">Todos os Estados</option>
+                    </select>
+                </div>
+
+                <!-- Dropdown Cidade -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-porsche-silver mb-1">Cidade</label>
+                    <select id="filterCity" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border text-xs rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:border-porsche-gold">
+                        <option value="ALL">Todas as Cidades</option>
+                    </select>
+                </div>
+
+                <!-- Dropdown Ano -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-porsche-silver mb-1">Ano do Veículo (Model Year)</label>
+                    <select id="filterYear" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border text-xs rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:border-porsche-gold">
+                        <option value="ALL">Todos os Anos</option>
+                    </select>
+                </div>
+
+                <!-- Dropdown Método de Pagamento -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-porsche-silver mb-1">Método de Pagamento</label>
+                    <select id="filterPayment" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border text-xs rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:border-porsche-gold">
+                        <option value="ALL">Todos os Métodos</option>
+                    </select>
+                </div>
+
+                <!-- Dropdown Status de Entrega -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-porsche-silver mb-1">Status de Entrega</label>
+                    <select id="filterStatus" onchange="updateDashboard()" class="w-full bg-porsche-dark border border-porsche-border text-xs rounded-lg px-3 py-2 text-gray-200 focus:outline-none focus:border-porsche-gold">
+                        <option value="ALL">Todos os Status</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO SUPERIOR: HERO SPOTLIGHT + 4 KPIS -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- CARD HERO / DESTAQUE DE MÍDIA DINÂMICO -->
+            <div class="lg:col-span-4 card-porsche rounded-xl p-4 flex flex-col justify-between relative overflow-hidden group">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-porsche-gold flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-porsche-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        Mídia & Especificação do Recorte
+                    </span>
+                    <span id="heroModelBadge" class="porsche-badge-red text-[10px] font-bold px-2 py-0.5 rounded uppercase">911 Turbo S</span>
+                </div>
+
+                <!-- Imagem HD com tratamento onerror -->
+                <div class="relative w-full h-44 sm:h-48 rounded-lg overflow-hidden bg-porsche-dark border border-porsche-border my-2">
+                    <img id="heroVehicleImage" 
+                         src="https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1000&q=80" 
+                         alt="Porsche Vehicle Spotlight" 
+                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1000&q=80';"
+                         class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-porsche-black via-transparent to-transparent opacity-80"></div>
+                    <div class="absolute bottom-2 left-3 right-3 flex justify-between items-end">
+                        <p id="heroImageTitle" class="text-sm font-extrabold text-white drop-shadow-md">Porsche 911 Turbo S</p>
+                        <span class="text-[10px] text-gray-300 bg-porsche-black/80 px-2 py-0.5 rounded border border-porsche-border">Porsche Corporate Media</span>
+                    </div>
+                </div>
+
+                <!-- Métricas Médias do Modelo Filtrado -->
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <div class="bg-porsche-dark p-2.5 rounded-lg border border-porsche-border">
+                        <span class="text-[10px] text-porsche-silver font-medium block">Preço Médio do Modelo</span>
+                        <span id="heroAvgPrice" class="text-base font-bold text-porsche-gold">$ 0</span>
+                    </div>
+                    <div class="bg-porsche-dark p-2.5 rounded-lg border border-porsche-border">
+                        <span class="text-[10px] text-porsche-silver font-medium block">Quilometragem Média</span>
+                        <span id="heroAvgKM" class="text-base font-bold text-gray-200">0 km</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARDS DE KPIS PRINCIPAIS -->
+            <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- KPI 1: Receita Total -->
+                <div class="card-porsche rounded-xl p-5 flex flex-col justify-between border-l-4 border-l-porsche-gold">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-porsche-silver uppercase tracking-wider">Receita Total</span>
+                        <div class="p-2 rounded-lg bg-porsche-gold/10 text-porsche-gold">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div id="kpiTotalRevenue" class="text-2xl font-black text-white">$ 0</div>
+                        <p id="kpiRevenueSub" class="text-[11px] text-porsche-silver mt-1">100% do faturamento da base</p>
+                    </div>
+                </div>
+
+                <!-- KPI 2: Total de Unidades Vendidas -->
+                <div class="card-porsche rounded-xl p-5 flex flex-col justify-between border-l-4 border-l-blue-500">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-porsche-silver uppercase tracking-wider">Unidades Vendidas</span>
+                        <div class="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div id="kpiTotalUnits" class="text-2xl font-black text-white">0</div>
+                        <p id="kpiUnitsSub" class="text-[11px] text-porsche-silver mt-1">Veículos registrados</p>
+                    </div>
+                </div>
+
+                <!-- KPI 3: Ticket Médio Geral -->
+                <div class="card-porsche rounded-xl p-5 flex flex-col justify-between border-l-4 border-l-emerald-500">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-porsche-silver uppercase tracking-wider">Ticket Médio</span>
+                        <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div id="kpiAvgTicket" class="text-2xl font-black text-white">$ 0</div>
+                        <p class="text-[11px] text-porsche-silver mt-1">Valor médio por transação</p>
+                    </div>
+                </div>
+
+                <!-- KPI 4: Taxa de Conclusão de Entrega -->
+                <div class="card-porsche rounded-xl p-5 flex flex-col justify-between border-l-4 border-l-porsche-red">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-porsche-silver uppercase tracking-wider">Taxa de Conclusão</span>
+                        <div class="p-2 rounded-lg bg-porsche-red/10 text-porsche-red">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div id="kpiCompletionRate" class="text-2xl font-black text-white">0%</div>
+                        <p id="kpiCompletionSub" class="text-[11px] text-porsche-silver mt-1">0 de 0 entregues com sucesso</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- GRID DE GRÁFICOS E PERGUNTAS DE NEGÓCIO (2x2) -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- CARD 1 | PERGUNTA 1 -->
+            <div class="card-porsche rounded-xl p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="porsche-badge-red text-[11px] font-bold px-2.5 py-0.5 rounded tracking-wider uppercase">PERGUNTA 1</span>
+                        <span class="text-[11px] text-porsche-silver">Análise de Risco Logístico</span>
+                    </div>
+                    <h2 class="text-base font-bold text-white">Qual a receita distribuída por Status de Entrega?</h2>
+                    <p class="text-xs text-porsche-silver mt-1">Identifica o volume financeiro em risco (pedidos pendentes, cancelados e em trânsito).</p>
+                </div>
+                
+                <div class="relative w-full h-72 my-4 flex items-center justify-center">
+                    <canvas id="statusChart"></canvas>
+                </div>
+
+                <div id="statusRiskSummary" class="bg-porsche-dark p-3 rounded-lg border border-porsche-border text-xs text-gray-300 flex justify-between items-center">
+                    <div>
+                        <span class="text-porsche-silver">Receita Em Risco (Trânsito/Pendente/Cancelado):</span>
+                        <span id="riskRevenueValue" class="font-bold text-porsche-red ml-1.5">$ 0</span>
+                    </div>
+                    <span id="riskPercentageBadge" class="bg-porsche-red/20 text-porsche-red px-2 py-0.5 rounded text-[10px] font-bold">0% do Total</span>
+                </div>
+            </div>
+
+            <!-- CARD 2 | PERGUNTA 2 -->
+            <div class="card-porsche rounded-xl p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="porsche-badge-red text-[11px] font-bold px-2.5 py-0.5 rounded tracking-wider uppercase">PERGUNTA 2</span>
+                        <span class="text-[11px] text-porsche-silver">Depreciação vs Valor</span>
+                    </div>
+                    <h2 class="text-base font-bold text-white">Quilometragem Média vs. Preço Médio por Modelo</h2>
+                    <p class="text-xs text-porsche-silver mt-1">Avalia o impacto do uso e depreciação nos valores praticados por linha de veículo.</p>
+                </div>
+
+                <div class="relative w-full h-72 my-4">
+                    <canvas id="usageChart"></canvas>
+                </div>
+
+                <div class="bg-porsche-dark p-3 rounded-lg border border-porsche-border text-xs text-gray-300 flex justify-between items-center">
+                    <span class="text-porsche-silver">Insight de Uso:</span>
+                    <span id="usageInsightText" class="font-medium text-porsche-gold text-[11px]">Calculando correlação...</span>
+                </div>
+            </div>
+
+            <!-- CARD 3 | PERGUNTA 3 -->
+            <div class="card-porsche rounded-xl p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="porsche-badge-red text-[11px] font-bold px-2.5 py-0.5 rounded tracking-wider uppercase">PERGUNTA 3</span>
+                        <span class="text-[11px] text-porsche-silver">Model Year Distribution</span>
+                    </div>
+                    <h2 class="text-base font-bold text-white">Faturamento e Volume de Vendas por Model Year</h2>
+                    <p class="text-xs text-porsche-silver mt-1">Mostra a concentração de vendas entre os anos de fabricação 2020 e 2026.</p>
+                </div>
+
+                <div class="relative w-full h-72 my-4">
+                    <canvas id="yearChart"></canvas>
+                </div>
+
+                <div class="bg-porsche-dark p-3 rounded-lg border border-porsche-border text-xs text-gray-300 flex justify-between items-center">
+                    <span class="text-porsche-silver">Ano de Maior Volume:</span>
+                    <span id="topYearBadge" class="font-bold text-porsche-gold">2024</span>
+                </div>
+            </div>
+
+            <!-- CARD 4 | LEITURA EXECUTIVA -->
+            <div class="card-porsche rounded-xl p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="porsche-badge-red text-[11px] font-bold px-2.5 py-0.5 rounded tracking-wider uppercase">RECOMENDAÇÕES</span>
+                        <span class="text-[11px] text-porsche-silver">Inteligência Comercial</span>
+                    </div>
+                    <h2 class="text-base font-bold text-white">Leitura executiva</h2>
+                    <p class="text-xs text-porsche-silver mt-1">Resumo automatizado dos principais direcionadores de performance no recorte selecionado.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
+                    <div class="bg-porsche-dark p-3.5 rounded-lg border border-porsche-border flex flex-col justify-between">
+                        <div class="flex items-center space-x-2 text-porsche-gold mb-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-porsche-silver">Modelo Líder em Receita</span>
+                        </div>
+                        <div id="insightTopModel" class="text-sm font-extrabold text-white">--</div>
+                        <div id="insightTopModelSub" class="text-[10px] text-porsche-silver mt-1">--</div>
+                    </div>
+
+                    <div class="bg-porsche-dark p-3.5 rounded-lg border border-porsche-border flex flex-col justify-between">
+                        <div class="flex items-center space-x-2 text-blue-400 mb-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-porsche-silver">Top Cidade em Faturamento</span>
+                        </div>
+                        <div id="insightTopCity" class="text-sm font-extrabold text-white">--</div>
+                        <div id="insightTopCitySub" class="text-[10px] text-porsche-silver mt-1">--</div>
+                    </div>
+
+                    <div class="bg-porsche-dark p-3.5 rounded-lg border border-porsche-border flex flex-col justify-between">
+                        <div class="flex items-center space-x-2 text-emerald-400 mb-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-porsche-silver">Pagamento Predominante</span>
+                        </div>
+                        <div id="insightTopPayment" class="text-sm font-extrabold text-white">--</div>
+                        <div id="insightTopPaymentSub" class="text-[10px] text-porsche-silver mt-1">--</div>
+                    </div>
+
+                    <div class="bg-porsche-dark p-3.5 rounded-lg border border-porsche-border flex flex-col justify-between">
+                        <div class="flex items-center space-x-2 text-purple-400 mb-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.618V7.382a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-porsche-silver">Estado Destaque (UF)</span>
+                        </div>
+                        <div id="insightTopState" class="text-sm font-extrabold text-white">--</div>
+                        <div id="insightTopStateSub" class="text-[10px] text-porsche-silver mt-1">--</div>
+                    </div>
+                </div>
+
+                <div class="bg-porsche-dark/60 p-3 rounded-lg border border-porsche-border text-[11px] text-porsche-silver">
+                    <strong class="text-porsche-gold font-semibold">Direcionamento Estratégico:</strong> Focar mitigação de cancelamentos nos estados com maior volume financeiro represado e priorizar alocação do modelo 911 Turbo S.
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER CORPORATIVO -->
+    <footer class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-4 border-t border-porsche-border flex flex-col sm:flex-row items-center justify-between text-xs text-porsche-silver">
+        <p>© 2026 Porsche Sales Intelligence — Relatório de BI Sanitizado.</p>
+        <p class="mt-2 sm:mt-0">Desenvolvido sob o padrão Porsche Corporate UX/UI.</p>
+    </footer>
+
+    <!-- LÓGICA JAVASCRIPT E BASE DE DADOS OFICIAL (100 REGISTROS SANITIZADOS) -->
+    <script>
+        const salesData = [
+  {"sale_id": 6, "data_venda": "INVÁLIDO", "cliente": "Michael Adams", "modelo": "718 Cayman", "familia": "718", "ano": 2022, "preco": 79500.0, "km": 9800, "metodo_pagamento": "Cartão de Crédito", "cidade": "Boston", "estado": "MA", "vendedor": "kevin", "status_entrega": "Entregue"},
+  {"sale_id": 7, "data_venda": "2024-03-14", "cliente": "SOPHIA Miller", "modelo": "911 Turbo S", "familia": "911", "ano": 2024, "preco": 235000.0, "km": 1200, "metodo_pagamento": "Transferência Bancária", "cidade": "Seattle", "estado": "WA", "vendedor": "AMANDA scott", "status_entrega": "Entregue"},
+  {"sale_id": 8, "data_venda": "2024-04-18", "cliente": "Daniel-Jones", "modelo": "Cayenne Coupé", "familia": "Cayenne", "ano": 2023, "preco": 112750.0, "km": 6400, "metodo_pagamento": "Financiamento", "cidade": "Austin", "estado": "TX", "vendedor": "Brian Hall", "status_entrega": "Em trânsito"},
+  {"sale_id": 9, "data_venda": "INVÁLIDO", "cliente": "Olivia Brown", "modelo": "Macan S", "familia": "Macan", "ano": 2021, "preco": 68900.0, "km": 28, "metodo_pagamento": "Dinheiro", "cidade": "Denver", "estado": "CO", "vendedor": "jessica", "status_entrega": "Pendente"},
+  {"sale_id": 10, "data_venda": "2024-05-22", "cliente": "Ethan Wilson", "modelo": "Taycan 4S", "familia": "Taycan", "ano": 2024, "preco": 121000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "Los Angeles", "estado": "CA", "vendedor": "Thomas King", "status_entrega": "Entregue"},
+  {"sale_id": 11, "data_venda": "2024-08-06", "cliente": "Ava Martinez", "modelo": "Panamera 4", "familia": "Panamera", "ano": 2023, "preco": 104500.0, "km": 14500, "metodo_pagamento": "Cartão de Crédito", "cidade": "Miami", "estado": "FL", "vendedor": "LISA ray", "status_entrega": "Cancelado"},
+  {"sale_id": 12, "data_venda": "2024-07-11", "cliente": "Noah Davis", "modelo": "911 Carrera S", "familia": "911", "ano": 2020, "preco": 96300.0, "km": 41000, "metodo_pagamento": "Arrendamento", "cidade": "New York", "estado": "NY", "vendedor": "Mark Evans", "status_entrega": "Entregue"},
+  {"sale_id": 13, "data_venda": "INVÁLIDO", "cliente": "Isabella Garcia", "modelo": "Cayenne E-Hybrid", "familia": "Cayenne", "ano": 2022, "preco": 89750.0, "km": 11744, "metodo_pagamento": "Transferência Bancária", "cidade": "San Diego", "estado": "CA", "vendedor": "nancy reed", "status_entrega": "Aguardando aprovação"},
+  {"sale_id": 14, "data_venda": "2024-08-19", "cliente": "Liam Rodriguez", "modelo": "718 Boxster", "familia": "718", "ano": 2021, "preco": 73500.0, "km": 22300, "metodo_pagamento": "Cartão de Débito", "cidade": "Chicago", "estado": "IL", "vendedor": "George Bell", "status_entrega": "Enviado"},
+  {"sale_id": 15, "data_venda": "2024-09-02", "cliente": "Mia Hernandez", "modelo": "Macan GTS", "familia": "Macan", "ano": 2024, "preco": 95000.0, "km": 3500, "metodo_pagamento": "Financiamento", "cidade": "Phoenix", "estado": "AZ", "vendedor": "Helen Brooks", "status_entrega": "Em trânsito"},
+  {"sale_id": 16, "data_venda": "2024-01-08", "cliente": "James Smith", "modelo": "Taycan Turbo", "familia": "Taycan", "ano": 2023, "preco": 160000.0, "km": 8200, "metodo_pagamento": "Transferência Bancária", "cidade": "Dallas", "estado": "TX", "vendedor": "Kevin Wright", "status_entrega": "Entregue"},
+  {"sale_id": 17, "data_venda": "2024-02-12", "cliente": "Charlotte Johnson", "modelo": "911 GT3", "familia": "911", "ano": 2024, "preco": 224000.0, "km": 450, "metodo_pagamento": "Cartão de Crédito", "cidade": "Las Vegas", "estado": "NV", "vendedor": "Amanda Scott", "status_entrega": "Entregue"},
+  {"sale_id": 18, "data_venda": "INVÁLIDO", "cliente": "Benjamin Williams", "modelo": "Panamera Turbo S", "familia": "Panamera", "ano": 2022, "preco": 180000.0, "km": 19500, "metodo_pagamento": "Financiamento", "cidade": "San Jose", "estado": "CA", "vendedor": "BRIAN hall", "status_entrega": "Pendente"},
+  {"sale_id": 19, "data_venda": "2024-04-03", "cliente": "Amelia Brown", "modelo": "Cayenne Turbo GT", "familia": "Cayenne", "ano": 2024, "preco": 198000.0, "km": 1500, "metodo_pagamento": "Transferência Bancária", "cidade": "Houston", "estado": "TX", "vendedor": "Jessica Green", "status_entrega": "Entregue"},
+  {"sale_id": 20, "data_venda": "2024-05-15", "cliente": "Lucas Jones", "modelo": "911 Carrera Cabriolet", "familia": "911", "ano": 2021, "preco": 115000.0, "km": 18000, "metodo_pagamento": "Arrendamento", "cidade": "Atlanta", "estado": "GA", "vendedor": "Thomas King", "status_entrega": "Em trânsito"},
+  {"sale_id": 21, "data_venda": "INVÁLIDO", "cliente": "Harper Garcia", "modelo": "Macan", "familia": "Macan", "ano": 2020, "preco": 57500.0, "km": 48000, "metodo_pagamento": "Dinheiro", "cidade": "Orlando", "estado": "FL", "vendedor": "LISA RAY", "status_entrega": "Aguardando Recolhimento"},
+  {"sale_id": 22, "data_venda": "2024-07-20", "cliente": "Evelyn Miller", "modelo": "718 Spyder RS", "familia": "718", "ano": 2024, "preco": 162000.0, "km": 300, "metodo_pagamento": "Transferência Bancária", "cidade": "Portland", "estado": "OR", "vendedor": "Mark Evans", "status_entrega": "Entregue"},
+  {"sale_id": 23, "data_venda": "2024-08-11", "cliente": "Alexander Davis", "modelo": "Taycan Cross Turismo", "familia": "Taycan", "ano": 2023, "preco": 118000.0, "km": 9400, "metodo_pagamento": "Cartão de Crédito", "cidade": "Charlotte", "estado": "NC", "vendedor": "Nancy Reed", "status_entrega": "Entregue"},
+  {"sale_id": 24, "data_venda": "INVÁLIDO", "cliente": "Abigail Rodriguez", "modelo": "Cayenne S", "familia": "Cayenne", "ano": 2022, "preco": 98000.0, "km": 21000, "metodo_pagamento": "Financiamento", "cidade": "Nashville", "estado": "TN", "vendedor": "George Bell", "status_entrega": "Pendente"},
+  {"sale_id": 25, "data_venda": "2024-10-01", "cliente": "Henry Martinez", "modelo": "911 Targa 4S", "familia": "911", "ano": 2023, "preco": 155000.0, "km": 6200, "metodo_pagamento": "Transferência Bancária", "cidade": "Minneapolis", "estado": "MN", "vendedor": "Helen Brooks", "status_entrega": "Em trânsito"},
+  {"sale_id": 26, "data_venda": "2024-01-19", "cliente": "Emily Hernandez", "modelo": "Panamera", "familia": "Panamera", "ano": 2020, "preco": 88000.0, "km": 39000, "metodo_pagamento": "Arrendamento", "cidade": "Philadelphia", "estado": "PA", "vendedor": "Kevin Wright", "status_entrega": "Entregue"},
+  {"sale_id": 27, "data_venda": "2024-02-28", "cliente": "Michael Lopez", "modelo": "Macan Electric", "familia": "Macan", "ano": 2024, "preco": 80500.0, "km": 100, "metodo_pagamento": "Pagamento ACH", "cidade": "San Antonio", "estado": "TX", "vendedor": "Amanda Scott", "status_entrega": "Entregue"},
+  {"sale_id": 28, "data_venda": "INVÁLIDO", "cliente": "Ella Gonzalez", "modelo": "911 Dakar", "familia": "911", "ano": 2024, "preco": 223000.0, "km": 800, "metodo_pagamento": "Transferência Bancária", "cidade": "Salt Lake City", "estado": "UT", "vendedor": "Brian Hall", "status_entrega": "Cancelado"},
+  {"sale_id": 29, "data_venda": "2024-04-14", "cliente": "Daniel Wilson", "modelo": "Taycan GTS", "familia": "Taycan", "ano": 2023, "preco": 139300.0, "km": 5100, "metodo_pagamento": "Cartão de Crédito", "cidade": "Raleigh", "estado": "NC", "vendedor": "JESSICA GREEN", "status_entrega": "Entregue"},
+  {"sale_id": 30, "data_venda": "2024-05-30", "cliente": "Sophia Anderson", "modelo": "Cayenne", "familia": "Cayenne", "ano": 2021, "preco": 79000.0, "km": 32000, "metodo_pagamento": "Financiamento", "cidade": "Detroit", "estado": "MI", "vendedor": "Thomas King", "status_entrega": "Entregue"},
+  {"sale_id": 31, "data_venda": "INVÁLIDO", "cliente": "Matthew Thomas", "modelo": "718 Cayman GT4 RS", "familia": "718", "ano": 2023, "preco": 163000.0, "km": 2900, "metodo_pagamento": "Pagamento em Criptomoedas", "cidade": "Columbus", "estado": "OH", "vendedor": "Lisa Ray", "status_entrega": "Aguardando Entrega"},
+  {"sale_id": 32, "data_venda": "2024-07-04", "cliente": "Avery Taylor", "modelo": "911 Carrera GTS", "familia": "911", "ano": 2024, "preco": 150900.0, "km": 1100, "metodo_pagamento": "Transferência Bancária", "cidade": "Indianapolis", "estado": "IN", "vendedor": "Mark Evans", "status_entrega": "Entregue"},
+  {"sale_id": 33, "data_venda": "2024-08-15", "cliente": "Jackson Moore", "modelo": "Panamera 4 E-Hybrid", "familia": "Panamera", "ano": 2022, "preco": 109000.0, "km": 16500, "metodo_pagamento": "Arrendamento", "cidade": "Fort Worth", "estado": "TX", "vendedor": "Nancy Reed", "status_entrega": "Em trânsito"},
+  {"sale_id": 34, "data_venda": "INVÁLIDO", "cliente": "Scarlett Jackson", "modelo": "Macan T", "familia": "Macan", "ano": 2023, "preco": 66500.0, "km": 8900, "metodo_pagamento": "Cartão de Crédito", "cidade": "Jacksonville", "estado": "FL", "vendedor": "George Bell", "status_entrega": "Pendente"},
+  {"sale_id": 35, "data_venda": "2024-09-22", "cliente": "Sebastian Martin", "modelo": "Taycan Turbo S", "familia": "Taycan", "ano": 2024, "preco": 209000.0, "km": 200, "metodo_pagamento": "Transferência Bancária", "cidade": "Tampa", "estado": "FL", "vendedor": "Helen Brooks", "status_entrega": "Entregue"},
+  {"sale_id": 36, "data_venda": "2024-01-25", "cliente": "Chloe Lee", "modelo": "911 Carrera", "familia": "911", "ano": 2020, "preco": 99200.0, "km": 28000, "metodo_pagamento": "Financiamento", "cidade": "Sacramento", "estado": "CA", "vendedor": "Kevin Wright", "status_entrega": "Entregue"},
+  {"sale_id": 37, "data_venda": "INVÁLIDO", "cliente": "Jack Perez", "modelo": "Taycan", "familia": "Taycan", "ano": 2022, "preco": 90900.0, "km": 15400, "metodo_pagamento": "Dinheiro", "cidade": "Cleveland", "estado": "OH", "vendedor": "Amanda Scott", "status_entrega": "Aguardando revisão"},
+  {"sale_id": 38, "data_venda": "2024-03-31", "cliente": "Victoria Thompson", "modelo": "Panamera 4S", "familia": "Panamera", "ano": 2023, "preco": 118500.0, "km": 11200, "metodo_pagamento": "Transferência Bancária", "cidade": "Milwaukee", "estado": "WI", "vendedor": "Brian Hall", "status_entrega": "Entregue"},
+  {"sale_id": 39, "data_venda": "2024-04-20", "cliente": "Owen White", "modelo": "911 Turbo", "familia": "911", "ano": 2022, "preco": 182900.0, "km": 9300, "metodo_pagamento": "Cartão de Crédito", "cidade": "Kansas City", "estado": "MO", "vendedor": "JESSICA GREEN", "status_entrega": "Em trânsito"},
+  {"sale_id": 40, "data_venda": "INVÁLIDO", "cliente": "Grace Harris", "modelo": "Cayenne Coupé", "familia": "Cayenne", "ano": 2024, "preco": 129000.0, "km": 500, "metodo_pagamento": "Transferência Bancária", "cidade": "Omaha", "estado": "NE", "vendedor": "Thomas King", "status_entrega": "Pendente"},
+  {"sale_id": 41, "data_venda": "2024-06-18", "cliente": "Samuel Sanchez", "modelo": "Panamera Turbo", "familia": "Panamera", "ano": 2021, "preco": 153000.0, "km": 24000, "metodo_pagamento": "Arrendamento", "cidade": "Albuquerque", "estado": "NM", "vendedor": "Lisa Ray", "status_entrega": "Entregue"},
+  {"sale_id": 42, "data_venda": "2024-07-29", "cliente": "Zoey Clark", "modelo": "911 GT3 RS", "familia": "911", "ano": 2024, "preco": 241300.0, "km": 150, "metodo_pagamento": "Pagamento em Criptomoedas", "cidade": "Tucson", "estado": "AZ", "vendedor": "Mark Evans", "status_entrega": "Entregue"},
+  {"sale_id": 43, "data_venda": "INVÁLIDO", "cliente": "Gabriel Ramirez", "modelo": "Macan S", "familia": "Macan", "ano": 2022, "preco": 72300.0, "km": 18500, "metodo_pagamento": "Financiamento", "cidade": "Fresno", "estado": "CA", "vendedor": "Nancy Reed", "status_entrega": "Aguardando Entrega"},
+  {"sale_id": 44, "data_venda": "2024-09-10", "cliente": "Penelope Lewis", "modelo": "718 Boxster", "familia": "718", "ano": 2020, "preco": 62000.0, "km": 35000, "metodo_pagamento": "Cartão de Débito", "cidade": "Virginia Beach", "estado": "VA", "vendedor": "George Bell", "status_entrega": "Entregue"},
+  {"sale_id": 45, "data_venda": "2024-10-05", "cliente": "Anthony Robinson", "modelo": "Taycan 4S", "familia": "Taycan", "ano": 2023, "preco": 118500.0, "km": 7800, "metodo_pagamento": "Transferência Bancária", "cidade": "Colorado Springs", "estado": "CO", "vendedor": "Helen Brooks", "status_entrega": "Em trânsito"},
+  {"sale_id": 46, "data_venda": "2024-01-14", "cliente": "Lillian Walker", "modelo": "Cayenne E-Hybrid", "familia": "Cayenne", "ano": 2024, "preco": 99100.0, "km": 1200, "metodo_pagamento": "Cartão de Crédito", "cidade": "Arlington", "estado": "TX", "vendedor": "Kevin Wright", "status_entrega": "Entregue"},
+  {"sale_id": 47, "data_venda": "INVÁLIDO", "cliente": "Dylan Young", "modelo": "911 Targa 4", "familia": "911", "ano": 2022, "preco": 134500.0, "km": 12400, "metodo_pagamento": "Arrendamento", "cidade": "Bakersfield", "estado": "CA", "vendedor": "Amanda Scott", "status_entrega": "Pendente"},
+  {"sale_id": 48, "data_venda": "2024-03-22", "cliente": "Nora Allen", "modelo": "Macan GTS", "familia": "Macan", "ano": 2023, "preco": 89000.0, "km": 9100, "metodo_pagamento": "Financiamento", "cidade": "Mesa", "estado": "AZ", "vendedor": "Brian Hall", "status_entrega": "Entregue"},
+  {"sale_id": 49, "data_venda": "2024-04-29", "cliente": "Isaac King", "modelo": "Cayenne Turbo", "familia": "Cayenne", "ano": 2021, "preco": 135000.0, "km": 26000, "metodo_pagamento": "Transferência Bancária", "cidade": "Long Beach", "estado": "CA", "vendedor": "Jessica Green", "status_entrega": "Em trânsito"},
+  {"sale_id": 50, "data_venda": "INVÁLIDO", "cliente": "Camila Wright", "modelo": "718 Cayman S", "familia": "718", "ano": 2024, "preco": 80300.0, "km": 600, "metodo_pagamento": "Dinheiro", "cidade": "Oakland", "estado": "CA", "vendedor": "THOMAS KING", "status_entrega": "Cancelado"},
+  {"sale_id": 51, "data_venda": "2024-06-11", "cliente": "Joshua Scott", "modelo": "Panamera 4", "familia": "Panamera", "ano": 2024, "preco": 109800.0, "km": 1800, "metodo_pagamento": "Transferência Bancária", "cidade": "Tulsa", "estado": "OK", "vendedor": "Lisa Ray", "status_entrega": "Entregue"},
+  {"sale_id": 52, "data_venda": "2024-07-15", "cliente": "Emily Torres", "modelo": "911 Carrera S", "familia": "911", "ano": 2023, "preco": 131300.0, "km": 4900, "metodo_pagamento": "Cartão de Crédito", "cidade": "Wichita", "estado": "KS", "vendedor": "Mark Evans", "status_entrega": "Entregue"},
+  {"sale_id": 53, "data_venda": "INVÁLIDO", "cliente": "Christopher Nguyen", "modelo": "Taycan Cross Turismo", "familia": "Taycan", "ano": 2022, "preco": 113000.0, "km": 14200, "metodo_pagamento": "Financiamento", "cidade": "New Orleans", "estado": "LA", "vendedor": "Nancy Reed", "status_entrega": "Aguardando Entrega"},
+  {"sale_id": 54, "data_venda": "2024-09-08", "cliente": "Hazel Hill", "modelo": "Macan", "familia": "Macan", "ano": 2024, "preco": 62900.0, "km": 400, "metodo_pagamento": "Pagamento ACH", "cidade": "Honolulu", "estado": "HI", "vendedor": "George Bell", "status_entrega": "Entregue"},
+  {"sale_id": 55, "data_venda": "2024-10-12", "cliente": "Andrew Flores", "modelo": "Cayenne S", "familia": "Cayenne", "ano": 2023, "preco": 108000.0, "km": 7200, "metodo_pagamento": "Transferência Bancária", "cidade": "Anaheim", "estado": "CA", "vendedor": "Helen Brooks", "status_entrega": "Em trânsito"},
+  {"sale_id": 56, "data_venda": "2024-01-30", "cliente": "Violet Green", "modelo": "718 Boxster GTS", "familia": "718", "ano": 2021, "preco": 89500.0, "km": 19800, "metodo_pagamento": "Cartão de Débito", "cidade": "Henderson", "estado": "NV", "vendedor": "Kevin Wright", "status_entrega": "Entregue"},
+  {"sale_id": 57, "data_venda": "INVÁLIDO", "cliente": "David Adams", "modelo": "911 Turbo S", "familia": "911", "ano": 2023, "preco": 230000.0, "km": 3100, "metodo_pagamento": "Pagamento em Criptomoedas", "cidade": "Lexington", "estado": "KY", "vendedor": "Amanda Scott", "status_entrega": "Pendente"},
+  {"sale_id": 58, "data_venda": "2024-03-18", "cliente": "Aria Nelson", "modelo": "Panamera Turbo S", "familia": "Panamera", "ano": 2024, "preco": 190000.0, "km": 900, "metodo_pagamento": "Transferência Bancária", "cidade": "Riverside", "estado": "CA", "vendedor": "Brian Hall", "status_entrega": "Entregue"},
+  {"sale_id": 59, "data_venda": "2024-04-22", "cliente": "Joseph Baker", "modelo": "Taycan Turbo", "familia": "Taycan", "ano": 2021, "preco": 150000.0, "km": 22000, "metodo_pagamento": "Arrendamento", "cidade": "Corpus Christi", "estado": "TX", "vendedor": "Jessica Green", "status_entrega": "Em trânsito"},
+  {"sale_id": 60, "data_venda": "INVÁLIDO", "cliente": "Chloe Hall", "modelo": "Macan S", "familia": "Macan", "ano": 2024, "preco": 74500.0, "km": 300, "metodo_pagamento": "Financiamento", "cidade": "St. Louis", "estado": "MO", "vendedor": "Thomas King", "status_entrega": "Cancelado"},
+  {"sale_id": 61, "data_venda": "2024-06-25", "cliente": "Carter Rivera", "modelo": "911 GT3", "familia": "911", "ano": 2023, "preco": 210000.0, "km": 2400, "metodo_pagamento": "Transferência Bancária", "cidade": "Pittsburgh", "estado": "PA", "vendedor": "Lisa Ray", "status_entrega": "Entregue"},
+  {"sale_id": 62, "data_venda": "2024-07-31", "cliente": "Penelope Campbell", "modelo": "Cayenne Coupé", "familia": "Cayenne", "ano": 2022, "preco": 105000.0, "km": 15000, "metodo_pagamento": "Cartão de Crédito", "cidade": "Cincinnati", "estado": "OH", "vendedor": "Mark Evans", "status_entrega": "Entregue"},
+  {"sale_id": 63, "data_venda": "INVÁLIDO", "cliente": "Owen Mitchell", "modelo": "718 Cayman", "familia": "718", "ano": 2020, "preco": 60500.0, "km": 38000, "metodo_pagamento": "Dinheiro", "cidade": "Anchorage", "estado": "AK", "vendedor": "Nancy Reed", "status_entrega": "Aguardando Recolhimento"},
+  {"sale_id": 64, "data_venda": "2024-09-14", "cliente": "Riley Carter", "modelo": "Taycan 4S", "familia": "Taycan", "ano": 2024, "preco": 125000.0, "km": 1100, "metodo_pagamento": "Transferência Bancária", "cidade": "Plano", "estado": "TX", "vendedor": "George Bell", "status_entrega": "Entregue"},
+  {"sale_id": 65, "data_venda": "2024-10-18", "cliente": "Wyatt Roberts", "modelo": "Panamera", "familia": "Panamera", "ano": 2023, "preco": 97000.0, "km": 8500, "metodo_pagamento": "Arrendamento", "cidade": "Newark", "estado": "NJ", "vendedor": "Helen Brooks", "status_entrega": "Em trânsito"},
+  {"sale_id": 66, "data_venda": "2024-01-11", "cliente": "Lillian Gomez", "modelo": "Macan GTS", "familia": "Macan", "ano": 2021, "preco": 82000.0, "km": 27000, "metodo_pagamento": "Financiamento", "cidade": "Greensboro", "estado": "NC", "vendedor": "Kevin Wright", "status_entrega": "Entregue"},
+  {"sale_id": 67, "data_venda": "INVÁLIDO", "cliente": "Julian Phillips", "modelo": "911 Carrera GTS", "familia": "911", "ano": 2022, "preco": 142000.0, "km": 11000, "metodo_pagamento": "Cartão de Crédito", "cidade": "Lincoln", "estado": "NE", "vendedor": "Amanda Scott", "status_entrega": "Pendente"},
+  {"sale_id": 68, "data_venda": "2024-03-05", "cliente": "Layla Evans", "modelo": "Cayenne Turbo GT", "familia": "Cayenne", "ano": 2024, "preco": 202000.0, "km": 400, "metodo_pagamento": "Transferência Bancária", "cidade": "Jersey City", "estado": "NJ", "vendedor": "Brian Hall", "status_entrega": "Entregue"},
+  {"sale_id": 69, "data_venda": "2024-04-12", "cliente": "Grayson Turner", "modelo": "718 Spyder RS", "familia": "718", "ano": 2023, "preco": 160000.0, "km": 1800, "metodo_pagamento": "Pagamento em Criptomoedas", "cidade": "Chandler", "estado": "AZ", "vendedor": "Jessica Green", "status_entrega": "Em trânsito"},
+  {"sale_id": 70, "data_venda": "INVÁLIDO", "cliente": "Zoey Diaz", "modelo": "Taycan GTS", "familia": "Taycan", "ano": 2024, "preco": 141000.0, "km": 800, "metodo_pagamento": "Transferência Bancária", "cidade": "Reno", "estado": "NV", "vendedor": "Thomas King", "status_entrega": "Aguardando Entrega"},
+  {"sale_id": 71, "data_venda": "2024-06-08", "cliente": "Leo Parker", "modelo": "Panamera 4 E-Hybrid", "familia": "Panamera", "ano": 2021, "preco": 102000.0, "km": 29000, "metodo_pagamento": "Financiamento", "cidade": "Buffalo", "estado": "NY", "vendedor": "Lisa Ray", "status_entrega": "Entregue"},
+  {"sale_id": 72, "data_venda": "2024-07-22", "cliente": "Nora Cruz", "modelo": "911 Targa 4S", "familia": "911", "ano": 2024, "preco": 161000.0, "km": 500, "metodo_pagamento": "Arrendamento", "cidade": "Durham", "estado": "NC", "vendedor": "Mark Evans", "status_entrega": "Entregue"},
+  {"sale_id": 73, "data_venda": "INVÁLIDO", "cliente": "Jaxon Edwards", "modelo": "Macan Electric", "familia": "Macan", "ano": 2024, "preco": 82000.0, "km": 200, "metodo_pagamento": "Pagamento ACH", "cidade": "Laredo", "estado": "TX", "vendedor": "Nancy Reed", "status_entrega": "Pendente"},
+  {"sale_id": 74, "data_venda": "2024-09-01", "cliente": "Eleanor Collins", "modelo": "Cayenne E-Hybrid", "familia": "Cayenne", "ano": 2023, "preco": 93000.0, "km": 8400, "metodo_pagamento": "Cartão de Crédito", "cidade": "Madison", "estado": "WI", "vendedor": "George Bell", "status_entrega": "Entregue"},
+  {"sale_id": 75, "data_venda": "2024-10-19", "cliente": "Mateo Reyes", "modelo": "718 Boxster", "familia": "718", "ano": 2022, "preco": 69000.0, "km": 14000, "metodo_pagamento": "Cartão de Débito", "cidade": "Lubbock", "estado": "TX", "vendedor": "Helen Brooks", "status_entrega": "Em trânsito"},
+  {"sale_id": 76, "data_venda": "2024-01-05", "cliente": "Hannah Stewart", "modelo": "911 Dakar", "familia": "911", "ano": 2023, "preco": 225000.0, "km": 1900, "metodo_pagamento": "Transferência Bancária", "cidade": "Toledo", "estado": "OH", "vendedor": "Kevin Wright", "status_entrega": "Entregue"},
+  {"sale_id": 77, "data_venda": "INVÁLIDO", "cliente": "Ezra Morris", "modelo": "Taycan Turbo S", "familia": "Taycan", "ano": 2022, "preco": 195000.0, "km": 11000, "metodo_pagamento": "Pagamento em Criptomoedas", "cidade": "Irvine", "estado": "CA", "vendedor": "Amanda Scott", "status_entrega": "Aguardando aprovação"},
+  {"sale_id": 78, "data_venda": "2024-03-12", "cliente": "Addison Morales", "modelo": "Panamera 4S", "familia": "Panamera", "ano": 2020, "preco": 95000.0, "km": 42000, "metodo_pagamento": "Financiamento", "cidade": "Garland", "estado": "TX", "vendedor": "Brian Hall", "status_entrega": "Entregue"},
+  {"sale_id": 79, "data_venda": "2024-04-18", "cliente": "Lincoln Murphy", "modelo": "Macan T", "familia": "Macan", "ano": 2024, "preco": 68000.0, "km": 600, "metodo_pagamento": "Cartão de Crédito", "cidade": "Irving", "estado": "TX", "vendedor": "Jessica Green", "status_entrega": "Em trânsito"},
+  {"sale_id": 80, "data_venda": "INVÁLIDO", "cliente": "Aubrey Cook", "modelo": "Cayenne S", "familia": "Cayenne", "ano": 2021, "preco": 88000.0, "km": 31000, "metodo_pagamento": "Dinheiro", "cidade": "Chesapeake", "estado": "VA", "vendedor": "Thomas King", "status_entrega": "Cancelado"},
+  {"sale_id": 81, "data_venda": "2024-06-20", "cliente": "Hudson Rogers", "modelo": "718 Cayman GT4 RS", "familia": "718", "ano": 2024, "preco": 168000.0, "km": 200, "metodo_pagamento": "Transferência Bancária", "cidade": "Scottsdale", "estado": "AZ", "vendedor": "Lisa Ray", "status_entrega": "Entregue"},
+  {"sale_id": 82, "data_venda": "2024-07-28", "cliente": "Stella Gutierrez", "modelo": "911 GT3 RS", "familia": "911", "ano": 2023, "preco": 245000.0, "km": 1200, "metodo_pagamento": "Transferência Bancária", "cidade": "Las Vegas", "estado": "NV", "vendedor": "Mark Evans", "status_entrega": "Entregue"},
+  {"sale_id": 83, "data_venda": "INVÁLIDO", "cliente": "Charles Ortiz", "modelo": "Taycan", "familia": "Taycan", "ano": 2023, "preco": 94000.0, "km": 8700, "metodo_pagamento": "Arrendamento", "cidade": "Norfolk", "estado": "VA", "vendedor": "Nancy Reed", "status_entrega": "Pendente"},
+  {"sale_id": 84, "data_venda": "2024-09-05", "cliente": "Natalie Morgan", "modelo": "Panamera Turbo", "familia": "Panamera", "ano": 2022, "preco": 145000.0, "km": 16000, "metodo_pagamento": "Financiamento", "cidade": "Boise", "estado": "ID", "vendedor": "George Bell", "status_entrega": "Entregue"},
+  {"sale_id": 85, "data_venda": "2024-10-21", "cliente": "Caleb Cooper", "modelo": "Macan S", "familia": "Macan", "ano": 2020, "preco": 59000.0, "km": 46000, "metodo_pagamento": "Dinheiro", "cidade": "Richmond", "estado": "VA", "vendedor": "Helen Brooks", "status_entrega": "Em trânsito"},
+  {"sale_id": 86, "data_venda": "2025-01-10", "cliente": "Leah Peterson", "modelo": "Cayenne Coupé", "familia": "Cayenne", "ano": 2025, "preco": 132000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "Los Angeles", "estado": "CA", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 87, "data_venda": "2025-02-14", "cliente": "Ryan Bailey", "modelo": "911 Turbo S", "familia": "911", "ano": 2025, "preco": 240000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "Miami", "estado": "FL", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 88, "data_venda": "2025-03-01", "cliente": "Hazel Reed", "modelo": "Taycan 4S", "familia": "Taycan", "ano": 2025, "preco": 128000.0, "km": 0, "metodo_pagamento": "Arrendamento", "cidade": "New York", "estado": "NY", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 89, "data_venda": "2025-03-20", "cliente": "Luke Kelly", "modelo": "Panamera 4", "familia": "Panamera", "ano": 2025, "preco": 112000.0, "km": 0, "metodo_pagamento": "Financiamento", "cidade": "Chicago", "estado": "IL", "vendedor": "Steve Ross", "status_entrega": "Em trânsito"},
+  {"sale_id": 90, "data_venda": "2025-04-15", "cliente": "Alice Howard", "modelo": "Macan GTS", "familia": "Macan", "ano": 2025, "preco": 98000.0, "km": 0, "metodo_pagamento": "Cartão de Crédito", "cidade": "Houston", "estado": "TX", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 91, "data_venda": "2025-05-10", "cliente": "Dylan Ramos", "modelo": "718 Boxster", "familia": "718", "ano": 2025, "preco": 78000.0, "km": 0, "metodo_pagamento": "Cartão de Débito", "cidade": "Phoenix", "estado": "AZ", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 92, "data_venda": "2025-06-01", "cliente": "Maya Kim", "modelo": "Cayenne E-Hybrid", "familia": "Cayenne", "ano": 2025, "preco": 102000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "San Francisco", "estado": "CA", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 93, "data_venda": "2025-07-04", "cliente": "Nathan Cox", "modelo": "911 GT3", "familia": "911", "ano": 2025, "preco": 230000.0, "km": 0, "metodo_pagamento": "Pagamento em Criptomoedas", "cidade": "Las Vegas", "estado": "NV", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 94, "data_venda": "2025-08-12", "cliente": "Chloe Ward", "modelo": "Taycan Cross Turismo", "familia": "Taycan", "ano": 2025, "preco": 122000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "Seattle", "estado": "WA", "vendedor": "Steve Ross", "status_entrega": "Em trânsito"},
+  {"sale_id": 95, "data_venda": "2025-09-01", "cliente": "Christian Richardson", "modelo": "Panamera Turbo S", "familia": "Panamera", "ano": 2025, "preco": 195000.0, "km": 0, "metodo_pagamento": "Financiamento", "cidade": "Dallas", "estado": "TX", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 96, "data_venda": "2025-10-10", "cliente": "Sarah Watson", "modelo": "Macan Electric", "familia": "Macan", "ano": 2025, "preco": 85000.0, "km": 0, "metodo_pagamento": "Pagamento ACH", "cidade": "Austin", "estado": "TX", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 97, "data_venda": "2025-11-05", "cliente": "Aaron Brooks", "modelo": "718 Spyder RS", "familia": "718", "ano": 2025, "preco": 168000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "Denver", "estado": "CO", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 98, "data_venda": "2025-12-01", "cliente": "Nora Chavez", "modelo": "Cayenne Turbo GT", "familia": "Cayenne", "ano": 2025, "preco": 208000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "Atlanta", "estado": "GA", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 99, "data_venda": "2026-01-15", "cliente": "Eli Wood", "modelo": "911 Dakar", "familia": "911", "ano": 2026, "preco": 232000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "Miami", "estado": "FL", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 100, "data_venda": "2026-02-20", "cliente": "Lila James", "modelo": "Taycan Turbo S", "familia": "Taycan", "ano": 2026, "preco": 215000.0, "km": 0, "metodo_pagamento": "Transferência Bancária", "cidade": "Los Angeles", "estado": "CA", "vendedor": "Steve Ross", "status_entrega": "Em trânsito"},
+  {"sale_id": 101, "data_venda": "2026-03-10", "cliente": "Landon Bennett", "modelo": "911 Carrera Cabriolet", "familia": "911", "ano": 2026, "preco": 121000.0, "km": 0, "metodo_pagamento": "Cartão de Crédito", "cidade": "San Diego", "estado": "CA", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 102, "data_venda": "2026-04-05", "cliente": "Elena Gray", "modelo": "911 Carrera", "familia": "911", "ano": 2024, "preco": 271700.0, "km": 1050, "metodo_pagamento": "Arrendamento", "cidade": "New Orleans", "estado": "LA", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 103, "data_venda": "2026-04-18", "cliente": "Mason Kelly", "modelo": "Cayenne S", "familia": "Cayenne", "ano": 2024, "preco": 115000.0, "km": 1500, "metodo_pagamento": "Financiamento", "cidade": "Austin", "estado": "TX", "vendedor": "Steve Ross", "status_entrega": "Entregue"},
+  {"sale_id": 104, "data_venda": "2026-05-02", "cliente": "Harper Young", "modelo": "Macan GTS", "familia": "Macan", "ano": 2024, "preco": 92000.0, "km": 2100, "metodo_pagamento": "Transferência Bancária", "cidade": "Dallas", "estado": "TX", "vendedor": "Steve Ross", "status_entrega": "Em trânsito"},
+  {"sale_id": 105, "data_venda": "2026-05-20", "cliente": "Evelyn King", "modelo": "Panamera 4S", "familia": "Panamera", "ano": 2024, "preco": 124000.0, "km": 3000, "metodo_pagamento": "Cartão de Crédito", "cidade": "Houston", "estado": "TX", "vendedor": "Steve Ross", "status_entrega": "Entregue"}
+];
+
+        const modelImages = {
+            '911': 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1000&q=80',
+            'Taycan': 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1000&q=80',
+            'Panamera': 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80',
+            'Cayenne': 'https://images.unsplash.com/photo-1541348263662-e068662d82af?auto=format&fit=crop&w=1000&q=80',
+            'Macan': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80',
+            '718': 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1000&q=80',
+            'default': 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1000&q=80'
+        };
+
+        let statusChartInstance = null;
+        let usageChartInstance = null;
+        let yearChartInstance = null;
+
+        const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+        const formatNumber = (val) => new Intl.NumberFormat('pt-BR').format(Math.round(val));
+
+        window.addEventListener('DOMContentLoaded', () => {
+            populateFilterDropdowns();
+            initCharts();
+            updateDashboard();
+        });
+
+        function populateFilterDropdowns() {
+            // Modelos Específicos
+            const models = [...new Set(salesData.map(d => d.modelo))].sort();
+            const optgroupModels = document.getElementById('optgroupModels');
+            optgroupModels.innerHTML = '';
+            models.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = `MOD_${m}`;
+                opt.textContent = m;
+                optgroupModels.appendChild(opt);
+            });
+
+            // Estados (UF)
+            const states = [...new Set(salesData.map(d => d.estado))].sort();
+            const filterState = document.getElementById('filterState');
+            filterState.innerHTML = '<option value="ALL">Todos os Estados</option>';
+            states.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                filterState.appendChild(opt);
+            });
+
+            // Cidades
+            populateCityDropdown();
+
+            // Anos
+            const years = [...new Set(salesData.map(d => d.ano))].sort((a,b) => b - a);
+            const filterYear = document.getElementById('filterYear');
+            filterYear.innerHTML = '<option value="ALL">Todos os Anos</option>';
+            years.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                filterYear.appendChild(opt);
+            });
+
+            // Método de Pagamento
+            const payments = [...new Set(salesData.map(d => d.metodo_pagamento))].sort();
+            const filterPayment = document.getElementById('filterPayment');
+            filterPayment.innerHTML = '<option value="ALL">Todos os Métodos</option>';
+            payments.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                filterPayment.appendChild(opt);
+            });
+
+            // Status de Entrega
+            const statuses = [...new Set(salesData.map(d => d.status_entrega))].sort();
+            const filterStatus = document.getElementById('filterStatus');
+            filterStatus.innerHTML = '<option value="ALL">Todos os Status</option>';
+            statuses.forEach(st => {
+                const opt = document.createElement('option');
+                opt.value = st;
+                opt.textContent = st;
+                filterStatus.appendChild(opt);
+            });
+        }
+
+        function populateCityDropdown() {
+            const filterCity = document.getElementById('filterCity');
+            const selectedState = document.getElementById('filterState').value;
+            const currentCityValue = filterCity.value || 'ALL';
+
+            filterCity.innerHTML = '<option value="ALL">Todas as Cidades</option>';
+            
+            let filteredCities = salesData;
+            if (selectedState !== 'ALL') {
+                filteredCities = salesData.filter(d => d.estado === selectedState);
+            }
+            
+            const cities = [...new Set(filteredCities.map(d => d.cidade))].sort();
+            cities.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                filterCity.appendChild(opt);
+            });
+
+            if (cities.includes(currentCityValue)) {
+                filterCity.value = currentCityValue;
+            } else {
+                filterCity.value = 'ALL';
+            }
+        }
+
+        function onStateChange() {
+            populateCityDropdown();
+            updateDashboard();
+        }
+
+        function resetFilters() {
+            document.getElementById('filterModel').value = 'ALL';
+            document.getElementById('filterState').value = 'ALL';
+            populateCityDropdown();
+            document.getElementById('filterCity').value = 'ALL';
+            document.getElementById('filterYear').value = 'ALL';
+            document.getElementById('filterPayment').value = 'ALL';
+            document.getElementById('filterStatus').value = 'ALL';
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const modelVal = document.getElementById('filterModel').value;
+            const stateVal = document.getElementById('filterState').value;
+            const cityVal = document.getElementById('filterCity').value;
+            const yearVal = document.getElementById('filterYear').value;
+            const paymentVal = document.getElementById('filterPayment').value;
+            const statusVal = document.getElementById('filterStatus').value;
+
+            // 1. Filtragem Estrita dos Dados
+            let filtered = salesData.filter(d => {
+                if (modelVal !== 'ALL') {
+                    if (modelVal.startsWith('FAM_')) {
+                        const targetFam = modelVal.replace('FAM_', '');
+                        if (d.familia !== targetFam) return false;
+                    } else if (modelVal.startsWith('MOD_')) {
+                        const targetMod = modelVal.replace('MOD_', '');
+                        if (d.modelo !== targetMod) return false;
+                    }
+                }
+                if (stateVal !== 'ALL' && d.estado !== stateVal) return false;
+                if (cityVal !== 'ALL' && d.cidade !== cityVal) return false;
+                if (yearVal !== 'ALL' && d.ano !== parseInt(yearVal)) return false;
+                if (paymentVal !== 'ALL' && d.metodo_pagamento !== paymentVal) return false;
+                if (statusVal !== 'ALL' && d.status_entrega !== statusVal) return false;
+
+                return true;
+            });
+
+            document.getElementById('filterSummaryText').textContent = `Exibindo ${filtered.length} de ${salesData.length} registros sanitizados`;
+
+            // 2. Recomputar KPIs do Topo
+            const totalRevenue = filtered.reduce((acc, curr) => acc + curr.preco, 0);
+            const totalUnits = filtered.length;
+            const grandTotalRevenue = salesData.reduce((acc, curr) => acc + curr.preco, 0);
+            const revenueShare = grandTotalRevenue > 0 ? ((totalRevenue / grandTotalRevenue) * 100).toFixed(1) : 0;
+
+            const avgTicket = totalUnits > 0 ? totalRevenue / totalUnits : 0;
+            const deliveredUnits = filtered.filter(d => d.status_entrega === 'Entregue').length;
+            const completionRate = totalUnits > 0 ? ((deliveredUnits / totalUnits) * 100).toFixed(1) : 0;
+
+            document.getElementById('kpiTotalRevenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('kpiRevenueSub').textContent = `${revenueShare}% do faturamento global`;
+            document.getElementById('kpiTotalUnits').textContent = totalUnits;
+            document.getElementById('kpiUnitsSub').textContent = `${totalUnits} veículo(s) no filtro`;
+            document.getElementById('kpiAvgTicket').textContent = formatCurrency(avgTicket);
+            document.getElementById('kpiCompletionRate').textContent = `${completionRate}%`;
+            document.getElementById('kpiCompletionSub').textContent = `${deliveredUnits} de ${totalUnits} entregues com sucesso`;
+
+            // 3. Atualizar Hero Card / Destaque de Mídia Dinâmico
+            updateHeroCard(filtered, modelVal);
+
+            // 4. Atualizar Gráficos Chart.js
+            updateStatusChart(filtered, totalRevenue);
+            updateUsageChart(filtered);
+            updateYearChart(filtered);
+
+            // 5. Atualizar Cards de Leitura Executiva / Insights
+            updateExecutiveInsights(filtered, totalRevenue);
+        }
+
+        function updateHeroCard(filtered, modelVal) {
+            const heroImg = document.getElementById('heroVehicleImage');
+            const heroBadge = document.getElementById('heroModelBadge');
+            const heroTitle = document.getElementById('heroImageTitle');
+            const heroAvgPrice = document.getElementById('heroAvgPrice');
+            const heroAvgKM = document.getElementById('heroAvgKM');
+
+            let familyKey = '911';
+            let label = '911 Turbo S';
+
+            if (modelVal.startsWith('FAM_')) {
+                familyKey = modelVal.replace('FAM_', '');
+                label = `Linha ${familyKey}`;
+            } else if (modelVal.startsWith('MOD_')) {
+                const modName = modelVal.replace('MOD_', '');
+                label = modName;
+                if (modName.includes('911')) familyKey = '911';
+                else if (modName.includes('Taycan')) familyKey = 'Taycan';
+                else if (modName.includes('Panamera')) familyKey = 'Panamera';
+                else if (modName.includes('Cayenne')) familyKey = 'Cayenne';
+                else if (modName.includes('Macan')) familyKey = 'Macan';
+                else if (modName.includes('718') || modName.includes('Boxster') || modName.includes('Cayman') || modName.includes('Spyder')) familyKey = '718';
+            } else if (filtered.length > 0) {
+                label = filtered[0].modelo;
+                familyKey = filtered[0].familia;
+            }
+
+            heroBadge.textContent = label;
+            heroTitle.textContent = `Porsche ${label}`;
+
+            const imgSrc = modelImages[familyKey] || modelImages['default'];
+            heroImg.src = imgSrc;
+
+            const avgPrice = filtered.length > 0 ? filtered.reduce((a, b) => a + b.preco, 0) / filtered.length : 0;
+            const avgKM = filtered.length > 0 ? filtered.reduce((a, b) => a + b.km, 0) / filtered.length : 0;
+
+            heroAvgPrice.textContent = formatCurrency(avgPrice);
+            heroAvgKM.textContent = `${formatNumber(avgKM)} km`;
+        }
+
+        function initCharts() {
+            Chart.defaults.color = '#9CA3AF';
+            Chart.defaults.font.family = 'Inter';
+
+            // CARD 1: DONUT CHART
+            const ctxStatus = document.getElementById('statusChart').getContext('2d');
+            statusChartInstance = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw || 0;
+                                    return ` Receita: ${formatCurrency(val)}`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '68%'
+                }
+            });
+
+            // CARD 2: BAR CHART
+            const ctxUsage = document.getElementById('usageChart').getContext('2d');
+            usageChartInstance = new Chart(ctxUsage, {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                callback: function(value) { return '$' + (value/1000) + 'k'; }
+                            }
+                        },
+                        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.label.includes('Preço')) {
+                                        return ` Preço Médio: ${formatCurrency(context.raw)}`;
+                                    } else {
+                                        return ` KM Média: ${formatNumber(context.raw)} km`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // CARD 3: COMBO CHART
+            const ctxYear = document.getElementById('yearChart').getContext('2d');
+            yearChartInstance = new Chart(ctxYear, {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        y1: {
+                            type: 'linear',
+                            position: 'left',
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { callback: (val) => '$' + (val/1000) + 'k' }
+                        },
+                        y2: {
+                            type: 'linear',
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: { precision: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.type === 'line') {
+                                        return ` Volume: ${context.raw} unidades`;
+                                    }
+                                    return ` Faturamento: ${formatCurrency(context.raw)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateStatusChart(filtered, totalRevenue) {
+            const statusMap = {};
+            filtered.forEach(d => {
+                statusMap[d.status_entrega] = (statusMap[d.status_entrega] || 0) + d.preco;
+            });
+
+            const labels = Object.keys(statusMap);
+            const data = Object.values(statusMap);
+
+            const colorPalette = {
+                'Entregue': '#10B981',
+                'Em trânsito': '#3B82F6',
+                'Pendente': '#F59E0B',
+                'Cancelado': '#D5001C',
+                'Aguardando Entrega': '#D4AF37',
+                'Aguardando Recolhimento': '#8B5CF6',
+                'Aguardando aprovação': '#EC4899',
+                'Aguardando revisão': '#6366F1',
+                'Enviado': '#06B6D4'
+            };
+
+            const bgColors = labels.map(l => colorPalette[l] || '#9CA3AF');
+
+            statusChartInstance.data.labels = labels;
+            statusChartInstance.data.datasets = [{
+                data: data,
+                backgroundColor: bgColors,
+                borderWidth: 1,
+                borderColor: '#1C2024'
+            }];
+            statusChartInstance.update();
+
+            const riskStatuses = ['Pendente', 'Em trânsito', 'Cancelado', 'Aguardando Entrega', 'Aguardando Recolhimento', 'Aguardando aprovação', 'Aguardando revisão'];
+            const riskRevenue = filtered.filter(d => riskStatuses.includes(d.status_entrega)).reduce((acc, curr) => acc + curr.preco, 0);
+            const riskPct = totalRevenue > 0 ? ((riskRevenue / totalRevenue) * 100).toFixed(1) : 0;
+
+            document.getElementById('riskRevenueValue').textContent = formatCurrency(riskRevenue);
+            document.getElementById('riskPercentageBadge').textContent = `${riskPct}% da Receita em Risco`;
+        }
+
+        function updateUsageChart(filtered) {
+            const modelVal = document.getElementById('filterModel').value;
+            const isFamilySelected = modelVal.startsWith('FAM_');
+            const groupKey = isFamilySelected ? 'modelo' : (modelVal === 'ALL' ? 'familia' : 'modelo');
+
+            const grouped = {};
+            filtered.forEach(d => {
+                const key = d[groupKey];
+                if (!grouped[key]) grouped[key] = { totalPrice: 0, totalKM: 0, count: 0 };
+                grouped[key].totalPrice += d.preco;
+                grouped[key].totalKM += d.km;
+                grouped[key].count += 1;
+            });
+
+            const labels = Object.keys(grouped);
+            const avgPrices = labels.map(k => grouped[k].totalPrice / grouped[k].count);
+            const avgKMs = labels.map(k => grouped[k].totalKM / grouped[k].count);
+
+            usageChartInstance.data.labels = labels;
+            usageChartInstance.data.datasets = [
+                {
+                    label: 'Preço Médio ($)',
+                    data: avgPrices,
+                    backgroundColor: '#D4AF37',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Quilometragem Média (KM)',
+                    data: avgKMs,
+                    backgroundColor: '#4B5563',
+                    borderRadius: 4
+                }
+            ];
+            usageChartInstance.update();
+
+            if (labels.length > 0) {
+                let maxKMItem = labels[0];
+                let maxKM = 0;
+                labels.forEach(l => {
+                    const km = grouped[l].totalKM / grouped[l].count;
+                    if (km > maxKM) { maxKM = km; maxKMItem = l; }
+                });
+                document.getElementById('usageInsightText').textContent = `Maior rodagem média observada na linha '${maxKMItem}' (${formatNumber(maxKM)} km).`;
+            } else {
+                document.getElementById('usageInsightText').textContent = 'Sem dados no recorte selecionado.';
+            }
+        }
+
+        function updateYearChart(filtered) {
+            const yearMap = {};
+            filtered.forEach(d => {
+                if (!yearMap[d.ano]) yearMap[d.ano] = { revenue: 0, count: 0 };
+                yearMap[d.ano].revenue += d.preco;
+                yearMap[d.ano].count += 1;
+            });
+
+            const years = Object.keys(yearMap).sort((a,b) => a - b);
+            const revenues = years.map(y => yearMap[y].revenue);
+            const volumes = years.map(y => yearMap[y].count);
+
+            yearChartInstance.data.labels = years;
+            yearChartInstance.data.datasets = [
+                {
+                    type: 'bar',
+                    label: 'Faturamento ($)',
+                    data: revenues,
+                    backgroundColor: 'rgba(212, 175, 55, 0.7)',
+                    borderColor: '#D4AF37',
+                    borderWidth: 1,
+                    yAxisID: 'y1',
+                    borderRadius: 4
+                },
+                {
+                    type: 'line',
+                    label: 'Volume de Vendas (Unid.)',
+                    data: volumes,
+                    borderColor: '#D5001C',
+                    backgroundColor: '#D5001C',
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    yAxisID: 'y2'
+                }
+            ];
+            yearChartInstance.update();
+
+            let topYear = '--';
+            let maxVol = 0;
+            years.forEach(y => {
+                if (yearMap[y].count > maxVol) {
+                    maxVol = yearMap[y].count;
+                    topYear = y;
+                }
+            });
+            document.getElementById('topYearBadge').textContent = `${topYear} (${maxVol} veículos)`;
+        }
+
+        function updateExecutiveInsights(filtered, totalRevenue) {
+            if (filtered.length === 0) {
+                document.getElementById('insightTopModel').textContent = 'N/A';
+                document.getElementById('insightTopCity').textContent = 'N/A';
+                document.getElementById('insightTopPayment').textContent = 'N/A';
+                document.getElementById('insightTopState').textContent = 'N/A';
+                return;
+            }
+
+            const modelRevenue = {};
+            filtered.forEach(d => modelRevenue[d.modelo] = (modelRevenue[d.modelo] || 0) + d.preco);
+            const topModel = Object.keys(modelRevenue).reduce((a, b) => modelRevenue[a] > modelRevenue[b] ? a : b);
+            const topModelVal = modelRevenue[topModel];
+            const topModelShare = totalRevenue > 0 ? ((topModelVal / totalRevenue) * 100).toFixed(1) : 0;
+
+            document.getElementById('insightTopModel').textContent = topModel;
+            document.getElementById('insightTopModelSub').textContent = `${formatCurrency(topModelVal)} (${topModelShare}% do faturamento)`;
+
+            const cityRevenue = {};
+            filtered.forEach(d => cityRevenue[d.cidade] = (cityRevenue[d.cidade] || 0) + d.preco);
+            const topCity = Object.keys(cityRevenue).reduce((a, b) => cityRevenue[a] > cityRevenue[b] ? a : b);
+            const topCityVal = cityRevenue[topCity];
+
+            document.getElementById('insightTopCity').textContent = topCity;
+            document.getElementById('insightTopCitySub').textContent = `${formatCurrency(topCityVal)} acumulados`;
+
+            const paymentCount = {};
+            filtered.forEach(d => paymentCount[d.metodo_pagamento] = (paymentCount[d.metodo_pagamento] || 0) + 1);
+            const topPayment = Object.keys(paymentCount).reduce((a, b) => paymentCount[a] > paymentCount[b] ? a : b);
+            const topPaymentCount = paymentCount[topPayment];
+            const topPaymentShare = ((topPaymentCount / filtered.length) * 100).toFixed(1);
+
+            document.getElementById('insightTopPayment').textContent = topPayment;
+            document.getElementById('insightTopPaymentSub').textContent = `${topPaymentCount} transações (${topPaymentShare}% de preferência)`;
+
+            const stateRevenue = {};
+            filtered.forEach(d => stateRevenue[d.estado] = (stateRevenue[d.estado] || 0) + d.preco);
+            const topState = Object.keys(stateRevenue).reduce((a, b) => stateRevenue[a] > stateRevenue[b] ? a : b);
+            const topStateVal = stateRevenue[topState];
+
+            document.getElementById('insightTopState').textContent = `Estado: ${topState}`;
+            document.getElementById('insightTopStateSub').textContent = `${formatCurrency(topStateVal)} em vendas`;
+        }
+    </script>
+</body>
+</html>
